@@ -38,14 +38,16 @@ pydub
 
 transformers
 accelerate
-llama-index-readers-wikipedia
-llama-index-graph-stores-nebula
-llama-index
-llama-index-experimental
-llama-parse
-llama-index-embeddings-huggingface
-llama-index-embeddings-instructor
-sentence-transformers
-llama-index-llms-gemini
 ipython-ngql 
 nebula3-python
+selenium
+beautifulsoup4
+httplib2
+langgraph 
+langchain-community 
+langchain-anthropic 
+tavily-python 
+pandas
+langchain_anthropic
+langchain-openai
+asyncio

@@ -1,15 +1,18 @@
 # voice_assistant/main.py
 
 import threading
+import random
 import logging
 import time
+import warnings
 from colorama import Fore, init
-from voice_assistant.audio import record_audio, play_audio
+from voice_assistant.audio import record_audio, play_audio, audio_status, audio_quit
 from voice_assistant.transcription import transcribe_audio
-from voice_assistant.response_generation import generate_response, rag_setup
+from voice_assistant.response_generation import *
 from voice_assistant.text_to_speech import text_to_speech
 from voice_assistant.utils import delete_file
-from voice_assistant.config import Config
+from config import Config
+import asyncio
 from voice_assistant.api_key_manager import get_transcription_api_key, get_response_api_key, get_tts_api_key
 
 # Configure logging
@@ -17,20 +20,34 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize colorama
-init(autoreset=True)
+init(autoreset=True) 
+response_list = [
+    "Let me just check that information for you, it’ll only take a moment.",
+    "I’m just pulling up the details on that product. ",
+    "I’m checking the latest updates on that offer for you. ",
+    "I’m just taking a moment to gather the best information on this. ",
+    "Let me confirm those details for you. ",
+    "I’m working on getting the most accurate info for you. ",
+    "I need a second to get that exact information for you. ",
+    "I’m double-checking the details to ensure you get the right answer. "
+]
 
+def response_updater(key, text):
+    response_list[key] = text
 
-def main():
+async def async_text_to_speech(*args):
+    await asyncio.to_thread(text_to_speech, *args)
+
+async def main():
     """
     Main function to run the voice assistant.
     """
-    rag_setup()
-
-    chat_history = [
-        {"role": "system", "content": """ You are a helpful Assistant called Verbi. 
-         You are friendly and fun and you will help the users with their requests.
-         Your answers are short and concise. """}
-    ]
+    warnings.filterwarnings('ignore')  
+    # chat_history = [
+    #     {"role": "system", "content": """ You are a helpful Assistant.
+    #      You are friendly and fun and you will help the users with their requests.
+    #      Your answers are short and concise. """}
+    # ]
 
     while True:
         try:
@@ -56,34 +73,63 @@ def main():
                 break
 
             # Append the user's input to the chat history
-            chat_history.append({"role": "user", "content": user_input})
+            # chat_history.append({"role": "user", "content": user_input})
 
-            # Get the API key for response generation
-            response_api_key = get_response_api_key()
-
-            # Generate a response
-            response_text = generate_response(
-                Config.RESPONSE_MODEL, response_api_key, user_input, Config.LOCAL_MODEL_PATH)
-            logging.info(Fore.CYAN + "Response: " + response_text + Fore.RESET)
-
-            print(response_text)
-
-            # Append the assistant's response to the chat history
-            chat_history.append(
-                {"role": "assistant", "content": response_text})
-
-            # Determine the output file format based on the TTS model
             if Config.TTS_MODEL == 'openai' or Config.TTS_MODEL == 'elevenlabs' or Config.TTS_MODEL == 'melotts' or Config.TTS_MODEL == 'cartesia':
                 output_file = 'output.mp3'
             else:
                 output_file = 'output.wav'
 
+#########-----------------------------------------------------------------------------------------############
+                 # Generate a response
+            response_task = generate_response(
+                user_input, Config.LOCAL_MODEL_PATH)
+            
+#########-----------------------------------------------------------------------------------------############
+
             # Get the API key for TTS
             tts_api_key = get_tts_api_key()
 
             # Convert the response text to speech and save it to the appropriate file
+        
+            tts_task = async_text_to_speech(Config.TTS_MODEL, tts_api_key,
+                           random.choice(response_list), output_file, Config.LOCAL_MODEL_PATH)
+            
+            task_var = await asyncio.gather(tts_task, response_task)
+
+            if Config.TTS_MODEL == "cartesia":
+                pass
+            else:
+                play_audio(output_file)
+
+            # Setting the environment
+
+            # Get the API key for response generation
+
+            response_api_key = get_response_api_key()
+
+           
+
+            # actual_output_received = False
+
+            # first_response = ""
+            # while first_response == "":
+            #     first_response = dict[1]
+            #     if (first_response != ""):
+            #         actual_output_received = True
+            #         break
+            #     first_response = dict[0]
+
+            # print(response_list)
+
+            # Append the assistant's response to the chat history
+            # chat_history.append(
+            #     {"role": "assistant", "content": response_text})
+
+            # Determine the output file format based on the TTS model
+            response_text =  task_var[1]
             text_to_speech(Config.TTS_MODEL, tts_api_key,
-                           response_text, output_file, Config.LOCAL_MODEL_PATH)
+                               response_text, "", Config.LOCAL_MODEL_PATH)
 
             # Play the generated speech audio
             if Config.TTS_MODEL == "cartesia":
@@ -104,4 +150,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+   asyncio.run(main())

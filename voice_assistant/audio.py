@@ -8,10 +8,11 @@ import pydub
 from io import BytesIO
 from pydub import AudioSegment
 
+
 def record_audio(file_path, timeout=10, phrase_time_limit=None, retries=3, energy_threshold=2000, pause_threshold=1, phrase_threshold=0.1, dynamic_energy_threshold=True, calibration_duration=1):
     """
     Record audio from the microphone and save it as an MP3 file.
-    
+
     Args:
     file_path (str): The path to save the recorded audio file.
     timeout (int): Maximum time to wait for a phrase to start (in seconds).
@@ -32,28 +33,33 @@ def record_audio(file_path, timeout=10, phrase_time_limit=None, retries=3, energ
         try:
             with sr.Microphone() as source:
                 logging.info("Calibrating for ambient noise...")
-                recognizer.adjust_for_ambient_noise(source, duration=calibration_duration)
+                recognizer.adjust_for_ambient_noise(
+                    source, duration=calibration_duration)
                 logging.info("Recording started")
                 # Listen for the first phrase and extract it into audio data
-                audio_data = recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
+                audio_data = recognizer.listen(
+                    source, timeout=timeout, phrase_time_limit=phrase_time_limit)
                 logging.info("Recording complete")
                 # Convert the recorded audio data to an MP3 file
                 wav_data = audio_data.get_wav_data()
                 audio_segment = pydub.AudioSegment.from_wav(BytesIO(wav_data))
-                mp3_data = audio_segment.export(file_path, format="mp3", bitrate="128k", parameters=["-ar", "22050", "-ac", "1"])
+                mp3_data = audio_segment.export(
+                    file_path, format="mp3", bitrate="128k", parameters=["-ar", "22050", "-ac", "1"])
                 return
         except sr.WaitTimeoutError:
-            logging.warning(f"Listening timed out, retrying... ({attempt + 1}/{retries})")
+            logging.warning(
+                f"Listening timed out, retrying... ({attempt + 1}/{retries})")
         except Exception as e:
             logging.error(f"Failed to record audio: {e}")
             break
     else:
         logging.error("Recording failed after all retries")
 
+
 def play_audio(file_path):
     """
     Play an audio file using pygame.
-    
+
     Args:
     file_path (str): The path to the audio file to play.
     """
@@ -61,10 +67,15 @@ def play_audio(file_path):
         pygame.mixer.init()
         pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            time.sleep(0.1)
-        pygame.mixer.quit()
     except pygame.error as e:
         logging.error(f"Failed to play audio: {e}")
     except Exception as e:
         logging.error(f"An unexpected error occurred while playing audio: {e}")
+
+
+def audio_status():
+    return pygame.mixer.music.get_busy()
+
+
+def audio_quit():
+    pygame.mixer.quit()

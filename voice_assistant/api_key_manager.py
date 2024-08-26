@@ -1,6 +1,6 @@
 # voice_assistant/api_key_manager.py
 
-from voice_assistant.config import Config
+from config import Config
 
 def get_transcription_api_key():
     """
