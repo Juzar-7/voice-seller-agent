@@ -9,7 +9,7 @@ from io import BytesIO
 from pydub import AudioSegment
 
 
-def record_audio(file_path, timeout=10, phrase_time_limit=None, retries=3, energy_threshold=2000, pause_threshold=1, phrase_threshold=0.1, dynamic_energy_threshold=True, calibration_duration=1):
+def record_audio(file_path, timeout=10, phrase_time_limit=None, retries=3, energy_threshold=2000, pause_threshold=0.5, phrase_threshold=0.1, dynamic_energy_threshold=True, calibration_duration=1):
     """
     Record audio from the microphone and save it as an MP3 file.
 
@@ -67,6 +67,9 @@ def play_audio(file_path):
         pygame.mixer.init()
         pygame.mixer.music.load(file_path)
         pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            time.sleep(0.1)
+        pygame.mixer.quit()
     except pygame.error as e:
         logging.error(f"Failed to play audio: {e}")
     except Exception as e:

@@ -7,6 +7,7 @@ from deepgram import DeepgramClient, SpeakOptions
 from elevenlabs.client import ElevenLabs
 # from cartesia.tts import CartesiaTTS
 from cartesia import Cartesia
+from voice_assistant.audio import play_audio
 import pyaudio
 import soundfile as sf
 import json
@@ -15,7 +16,7 @@ import json
 from voice_assistant.local_tts_generation import generate_audio_file_melotts
 
 
-def text_to_speech(model, api_key, text, output_file_path, local_model_path=None):
+def text_to_speech(model, api_key, text, output_file_path, local_model_path=None, id=None):
     """
     Convert text to speech using the specified model.
 
@@ -35,8 +36,9 @@ def text_to_speech(model, api_key, text, output_file_path, local_model_path=None
                 voice="fable",
                 input=text
             )
-
             speech_response.stream_to_file(output_file_path)
+            if id=="agent":
+                play_audio(output_file_path)
             # with open(output_file_path, "wb") as audio_file:
             #     audio_file.write(speech_response['data'])  # Ensure this correctly accesses the binary content
 

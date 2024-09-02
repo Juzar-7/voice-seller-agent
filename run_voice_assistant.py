@@ -5,7 +5,6 @@ import random
 import logging
 import time
 import warnings
-from colorama import Fore, init
 from voice_assistant.audio import record_audio, play_audio, audio_status, audio_quit
 from voice_assistant.transcription import transcribe_audio
 from voice_assistant.response_generation import *
@@ -14,6 +13,7 @@ from voice_assistant.utils import delete_file
 from config import Config
 import asyncio
 from voice_assistant.api_key_manager import get_transcription_api_key, get_response_api_key, get_tts_api_key
+from colorama import Fore, init
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -83,7 +83,7 @@ async def main():
 #########-----------------------------------------------------------------------------------------############
                  # Generate a response
             response_task = generate_response(
-                user_input, Config.LOCAL_MODEL_PATH)
+                user_input, Config.RESPONSE_MODEL)
             
 #########-----------------------------------------------------------------------------------------############
 
@@ -93,22 +93,23 @@ async def main():
             # Convert the response text to speech and save it to the appropriate file
         
             tts_task = async_text_to_speech(Config.TTS_MODEL, tts_api_key,
-                           random.choice(response_list), output_file, Config.LOCAL_MODEL_PATH)
+                           random.choice(response_list), output_file, Config.LOCAL_MODEL_PATH, "agent")
             
             task_var = await asyncio.gather(tts_task, response_task)
 
-            if Config.TTS_MODEL == "cartesia":
-                pass
-            else:
-                play_audio(output_file)
+
+                
 
             # Setting the environment
 
             # Get the API key for response generation
 
-            response_api_key = get_response_api_key()
+            # response_api_key = get_response_api_key()
 
            
+            # response_text =  task_var[1]
+            
+            play_audio("model.mp3")
 
             # actual_output_received = False
 
@@ -127,16 +128,8 @@ async def main():
             #     {"role": "assistant", "content": response_text})
 
             # Determine the output file format based on the TTS model
-            response_text =  task_var[1]
-            text_to_speech(Config.TTS_MODEL, tts_api_key,
-                               response_text, "", Config.LOCAL_MODEL_PATH)
 
             # Play the generated speech audio
-            if Config.TTS_MODEL == "cartesia":
-                pass
-            else:
-                play_audio(output_file)
-
             # Clean up audio files
             # delete_file(Config.INPUT_AUDIO)
             # delete_file(output_file)

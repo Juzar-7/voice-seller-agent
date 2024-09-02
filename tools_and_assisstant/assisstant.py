@@ -14,6 +14,7 @@ from tools_and_assisstant.specific_product import specific_product_info
 from tools_and_assisstant.reviews_product import specific_product_review
 from tools_and_assisstant.user_engage import user_engager
 from tools_and_assisstant.state import *
+from langchain_openai import ChatOpenAI, OpenAI
 from langchain_openai import AzureChatOpenAI
 from config import Config
 
@@ -43,9 +44,14 @@ class Assistant:
 
 
 # Haiku is faster and cheaper, but less accurate
-llm = ChatAnthropic(model="claude-3-haiku-20240307",
-                    # # llm = ChatAnthropic(model="claude-3-sonnet-20240229",
-                    streaming=True, temperature=1)
+llm = ChatOpenAI(model="gpt-4o",
+    temperature=0,
+    max_retries=2,
+    api_key=Config.OPENAI_API_KEY,
+    # base_url="...",
+    # organization="...",
+    # other params...
+    )
 
 primary_assistant_prompt = ChatPromptTemplate.from_messages(
     [
